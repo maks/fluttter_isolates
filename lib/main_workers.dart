@@ -40,7 +40,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    printMemUsage();
   }
 
   @override
@@ -54,16 +53,82 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Isolates: ${isoTable.count} Mem: $getMemInMb MB',
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Isolates: ${isoTable.count} Mem: $getMemInMb MB',
+                style: TextStyle(
+                  fontSize: 36,
+                ),
+              ),
             ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IsoButton(
+                  text: '+1',
+                  color: Colors.green,
+                  onPressed: () => spinupIsolates(1, isoTable),
+                ),
+                Container(
+                  width: 36,
+                ),
+                IsoButton(
+                  text: '+10',
+                  color: Colors.lightBlue,
+                  onPressed: () => spinupIsolates(10, isoTable),
+                ),
+                Container(
+                  width: 36,
+                ),
+                IsoButton(
+                  text: '+100',
+                  color: Colors.orange,
+                  onPressed: () => spinupIsolates(100, isoTable),
+                ),
+                Container(
+                  width: 36,
+                ),
+                IsoButton(
+                  text: '+1000',
+                  color: Colors.red,
+                  onPressed: () => spinupIsolates(1000, isoTable),
+                ),
+              ],
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => spinupIsolates(1, isoTable),
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+    );
+  }
+}
+
+class IsoButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+
+  IsoButton({
+    required this.text,
+    required this.onPressed,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        primary: Colors.white,
+        backgroundColor: color,
+        textStyle: TextStyle(
+          fontSize: 36,
+        ),
+      ),
+      onPressed: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(text),
       ),
     );
   }
@@ -85,19 +150,11 @@ class IsolatesTable extends ChangeNotifier {
   }
 }
 
-// ref: https://github.com/dart-lang/sdk/commit/9ce608e89d6b68d84f529fd9dab18f2bc61f5a8e
-void printMemUsage() {
-  final currentRss = ProcessInfo.currentRss;
-  final maxRss = ProcessInfo.maxRss;
-  print('RSS current:$currentRss max:$maxRss');
-}
-
 Future<Isolate> spawn(int id) async {
   return Isolate.spawn(worker, id);
 }
 
 Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
-  print('starting up isolates $isoCount...');
   final timer = Stopwatch()..start();
 
   for (var i = 0; i < isoCount; i += 1) {
@@ -105,8 +162,5 @@ Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
     table.add(iso);
   }
   timer..stop();
-  print(
-      'now have isoCount isolates in ${timer.elapsedMilliseconds}ms [${table.count}]');
-  printMemUsage();
   return timer.elapsedMilliseconds;
 }
