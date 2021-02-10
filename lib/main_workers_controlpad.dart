@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
-import 'isolate_control.dart';
+import 'isolate_comms.dart';
 
 int get getMemInMb => ProcessInfo.currentRss ~/ (1024 * 1024);
+
+const WORKERS = 64;
 
 void main() {
   runApp(ChangeNotifierProvider(
@@ -42,6 +44,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isoTable = context.read<IsolatesTable>();
+    if (isoTable.count < 1) {
+      spinupIsolates(WORKERS, isoTable);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isoTable = context.watch<IsolatesTable>();
     return Scaffold(
@@ -72,9 +83,11 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class WorkerGrid extends StatelessWidget {
-  final isoTable;
+  final IsolatesTable isoTable;
 
   const WorkerGrid({required this.isoTable});
+
+  String _data(int index) => isoTable.getData(index + 1).padLeft(2, '0');
 
   @override
   Widget build(BuildContext context) {
@@ -84,13 +97,16 @@ class WorkerGrid extends StatelessWidget {
       child: GridView.count(
         crossAxisCount: 8,
         children: List.generate(
-          64,
+          WORKERS,
           (index) => Center(
             child: Container(
               color: Colors.amber,
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
-                child: Text('$index'),
+                child: Text(
+                  '${_data(index)}',
+                  style: TextStyle(fontFamily: 'RobotoMono'),
+                ), //+1 cause we start isolate Ids at 1
               ),
             ),
           ),

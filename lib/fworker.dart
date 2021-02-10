@@ -3,7 +3,3 @@ void worker(int id) async {
     await Future.delayed(Duration(seconds: 1));
   }
 }
-
-void main(List args) {
-  worker(args[0]);
-}
