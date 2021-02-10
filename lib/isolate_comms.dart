@@ -19,22 +19,29 @@ class IsolatesTable extends ChangeNotifier {
 
   String getData(int isolateId) => _isolates[isolateId]?.data ?? '';
 
-  bool isAlive(int isolateId) => false == _isolates[isolateId]?.outOfDate;
+  bool isWorking(int isolateId) => false == _isolates[isolateId]?.outOfDate;
+
+  bool isAlive(int isolateId) => _isolates[isolateId]?.isolate != null;
 
   void clearAll() {
     _isolates.clear();
     notifyListeners();
   }
 
-  void updateIsolateData(int id, String message) {
-    _isolates[id]?.data = message;
-    _isolates[id]?.lastUpdate = DateTime.now();
+  void _updateIsolateData(int id, {String? message, bool dead = false}) {
+    if (message != null) {
+      _isolates[id]?.data = message;
+      _isolates[id]?.lastUpdate = DateTime.now();
+    }
+    if (dead) {
+      _isolates[id]?.isolate = null;
+    }
     notifyListeners();
   }
 }
 
 class IsolateRecord {
-  final Isolate isolate;
+  Isolate? isolate;
   String data = '';
   DateTime? lastUpdate;
 
@@ -63,9 +70,16 @@ Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
     final port = ReceivePort();
     final iso = await spawn(port.sendPort);
     final id = table.add(iso);
+    final _onExit = ReceivePort();
+    _onExit.listen((message) {
+      print('isolate $id errored out');
+      table._updateIsolateData(id, message: message, dead: true);
+    });
+    iso.addOnExitListener(_onExit.sendPort);
+
     port.listen((message) {
       //print('message from isolate $id: $message');
-      table.updateIsolateData(id, message.toString());
+      table._updateIsolateData(id, message: message.toString());
     });
   }
   timer..stop();

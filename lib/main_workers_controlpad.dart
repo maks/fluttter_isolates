@@ -89,6 +89,8 @@ class WorkerGrid extends StatelessWidget {
 
   String _data(int index) => isoTable.getData(index + 1).padLeft(2, '0');
 
+  bool _isWorking(int index) => isoTable.isWorking(index + 1);
+
   bool _alive(int index) => isoTable.isAlive(index + 1);
 
   @override
@@ -102,7 +104,7 @@ class WorkerGrid extends StatelessWidget {
           WORKERS,
           (index) => Center(
             child: Container(
-              color: _alive(index) ? Colors.greenAccent : Colors.red,
+              color: _getIsolateStatusColor(index),
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Text(
@@ -115,5 +117,16 @@ class WorkerGrid extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getIsolateStatusColor(int index) {
+    if (!_alive(index)) {
+      return Colors.red;
+    }
+    if (!_isWorking(index)) {
+      return Colors.grey;
+    } else {
+      return Colors.green;
+    }
   }
 }
