@@ -6,7 +6,7 @@ import 'isolate_comms.dart';
 
 int get getMemInMb => ProcessInfo.currentRss ~/ (1024 * 1024);
 
-const WORKERS = 64;
+const WORKERS = 10;
 
 void main() {
   runApp(ChangeNotifierProvider(
@@ -89,6 +89,8 @@ class WorkerGrid extends StatelessWidget {
 
   String _data(int index) => isoTable.getData(index + 1).padLeft(2, '0');
 
+  bool _alive(int index) => isoTable.isAlive(index + 1);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -100,7 +102,7 @@ class WorkerGrid extends StatelessWidget {
           WORKERS,
           (index) => Center(
             child: Container(
-              color: Colors.amber,
+              color: _alive(index) ? Colors.greenAccent : Colors.red,
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Text(

@@ -19,6 +19,8 @@ class IsolatesTable extends ChangeNotifier {
 
   String getData(int isolateId) => _isolates[isolateId]?.data ?? '';
 
+  bool isAlive(int isolateId) => false == _isolates[isolateId]?.outOfDate;
+
   void clearAll() {
     _isolates.clear();
     notifyListeners();
@@ -26,6 +28,7 @@ class IsolatesTable extends ChangeNotifier {
 
   void updateIsolateData(int id, String message) {
     _isolates[id]?.data = message;
+    _isolates[id]?.lastUpdate = DateTime.now();
     notifyListeners();
   }
 }
@@ -33,8 +36,19 @@ class IsolatesTable extends ChangeNotifier {
 class IsolateRecord {
   final Isolate isolate;
   String data = '';
+  DateTime? lastUpdate;
 
   IsolateRecord(this.isolate);
+}
+
+extension IsolateRecordMethods on IsolateRecord {
+  static const maxUpdatePeriod = Duration(milliseconds: 3000);
+  bool get outOfDate {
+    final last = lastUpdate;
+    return last != null
+        ? DateTime.now().subtract(maxUpdatePeriod).isAfter(last)
+        : false;
+  }
 }
 
 Future<Isolate> spawn(SendPort port) async {
