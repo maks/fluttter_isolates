@@ -17,7 +17,7 @@ class IsolatesTable extends ChangeNotifier {
     return isoId;
   }
 
-  void _replace(id, isolate) {
+  void _replace(int id, Isolate isolate) {
     _isolates[id] = IsolateRecord(isolate);
     notifyListeners();
   }
@@ -73,7 +73,7 @@ Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
   return timer.elapsedMilliseconds;
 }
 
-Future<void> restartIsolate(id, IsolatesTable table) async {
+Future<void> restartIsolate(int id, IsolatesTable table) async {
   await _setupIsolate(table, id: id);
 }
 
@@ -91,13 +91,13 @@ Future<Isolate> _setupIsolate(IsolatesTable table, {int? id}) async {
     isoId = table.add(isolate);
   }
 
-  _onExit.listen((message) {
+  _onExit.listen((dynamic message) {
     print('isolate $id errored out');
-    table._updateIsolateData(isoId, message: message, dead: true);
+    table._updateIsolateData(isoId, message: message.toString(), dead: true);
   });
   isolate.addOnExitListener(_onExit.sendPort);
 
-  port.listen((message) {
+  port.listen((dynamic message) {
     //print('message from isolate $id: $message');
     table._updateIsolateData(isoId, message: message.toString());
   });
