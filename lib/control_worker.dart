@@ -9,11 +9,11 @@ void worker(SendPort port) async {
     if (n == 13) {
       throw Exception('unluckly number: $n');
     }
-    if (n < 98) {
+    if (n < 99) {
       n = rand.nextInt(100);
       port.send(n);
     } else {
-      // print('top 2% percent get stuck');
+      // print('top 1% percent get stuck');
     }
 
     await Future<void>.delayed(Duration(seconds: 1));

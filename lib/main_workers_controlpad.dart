@@ -6,7 +6,7 @@ import 'isolate_comms.dart';
 
 int get getMemInMb => ProcessInfo.currentRss ~/ (1024 * 1024);
 
-const WORKERS = 10;
+const WORKERS = 36;
 
 void main() {
   runApp(ChangeNotifierProvider(
