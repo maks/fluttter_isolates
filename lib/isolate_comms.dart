@@ -92,8 +92,8 @@ Future<Isolate> _setupIsolate(IsolatesTable table, {int? id}) async {
   }
 
   _onExit.listen((dynamic message) {
-    print('isolate $id errored out');
-    table._updateIsolateData(isoId, message: message.toString(), dead: true);
+    print('isolate $id exited!');
+    table._updateIsolateData(isoId, dead: true);
   });
   isolate.addOnExitListener(_onExit.sendPort);
 
