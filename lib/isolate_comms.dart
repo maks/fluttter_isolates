@@ -28,6 +28,11 @@ class IsolatesTable extends ChangeNotifier {
 
   bool isAlive(int isolateId) => _isolates[isolateId]?.isolate != null;
 
+  void kill(int isolateId) {
+    _isolates[isolateId]?.isolate?.kill();
+    _isolates[isolateId]?.isolate = null;
+  }
+
   void clearAll() {
     _isolates.clear();
     notifyListeners();
@@ -74,6 +79,10 @@ Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
 }
 
 Future<void> restartIsolate(int id, IsolatesTable table) async {
+  // first kill isolate if its still alive
+  if (table.isAlive(id)) {
+    table.kill(id);
+  }
   await _setupIsolate(table, id: id);
 }
 
