@@ -87,12 +87,6 @@ class WorkerGrid extends StatelessWidget {
 
   const WorkerGrid({required this.isoTable});
 
-  String _data(int index) => isoTable.getData(index + 1).padLeft(2, '0');
-
-  bool _isWorking(int index) => isoTable.isWorking(index + 1);
-
-  bool _alive(int index) => isoTable.isAlive(index + 1);
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -102,17 +96,49 @@ class WorkerGrid extends StatelessWidget {
         crossAxisCount: 8,
         children: List.generate(
           WORKERS,
-          (index) => Center(
-            child: Container(
-              color: _getIsolateStatusColor(index),
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Text(
-                  '${_data(index)}',
-                  style: TextStyle(fontFamily: 'RobotoMono'),
-                ), //+1 cause we start isolate Ids at 1
-              ),
-            ),
+          (index) => WorkerMarker(
+            isoTable: isoTable,
+            index: index,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class WorkerMarker extends StatelessWidget {
+  final IsolatesTable isoTable;
+  final int index;
+
+  const WorkerMarker({
+    Key? key,
+    required this.isoTable,
+    required this.index,
+  }) : super(key: key);
+
+  int get _tableIndex => index + 1;
+
+  String _data(int index) => isoTable.getData(_tableIndex).padLeft(2, '0');
+
+  bool _isWorking(int index) => isoTable.isWorking(_tableIndex);
+
+  bool _alive(int index) => isoTable.isAlive(_tableIndex);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          restartIsolate(_tableIndex, isoTable);
+        },
+        child: Container(
+          color: _getIsolateStatusColor(index),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Text(
+              '${_data(index)}',
+              style: TextStyle(fontFamily: 'RobotoMono'),
+            ), //+1 cause we start isolate Ids at 1
           ),
         ),
       ),

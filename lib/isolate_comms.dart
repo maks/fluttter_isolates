@@ -17,6 +17,11 @@ class IsolatesTable extends ChangeNotifier {
     return isoId;
   }
 
+  void _replace(id, isolate) {
+    _isolates[id] = IsolateRecord(isolate);
+    notifyListeners();
+  }
+
   String getData(int isolateId) => _isolates[isolateId]?.data ?? '';
 
   bool isWorking(int isolateId) => false == _isolates[isolateId]?.outOfDate;
@@ -58,30 +63,48 @@ extension IsolateRecordMethods on IsolateRecord {
   }
 }
 
-Future<Isolate> spawn(SendPort port) async {
-  final isolate = await Isolate.spawn(worker, port);
-  return isolate;
-}
-
 Future<int> spinupIsolates(int isoCount, IsolatesTable table) async {
   final timer = Stopwatch()..start();
 
   for (var i = 0; i < isoCount; i++) {
-    final port = ReceivePort();
-    final iso = await spawn(port.sendPort);
-    final id = table.add(iso);
-    final _onExit = ReceivePort();
-    _onExit.listen((message) {
-      print('isolate $id errored out');
-      table._updateIsolateData(id, message: message, dead: true);
-    });
-    iso.addOnExitListener(_onExit.sendPort);
-
-    port.listen((message) {
-      //print('message from isolate $id: $message');
-      table._updateIsolateData(id, message: message.toString());
-    });
+    await _setupIsolate(table);
   }
   timer..stop();
   return timer.elapsedMilliseconds;
+}
+
+Future<void> restartIsolate(id, IsolatesTable table) async {
+  await _setupIsolate(table, id: id);
+}
+
+Future<Isolate> _setupIsolate(IsolatesTable table, {int? id}) async {
+  final port = ReceivePort();
+  final _onExit = ReceivePort();
+  final isolate = await _spawn(port.sendPort, _onExit.sendPort);
+
+  late int isoId;
+
+  if (id != null) {
+    isoId = id;
+    table._replace(isoId, isolate);
+  } else {
+    isoId = table.add(isolate);
+  }
+
+  _onExit.listen((message) {
+    print('isolate $id errored out');
+    table._updateIsolateData(isoId, message: message, dead: true);
+  });
+  isolate.addOnExitListener(_onExit.sendPort);
+
+  port.listen((message) {
+    //print('message from isolate $id: $message');
+    table._updateIsolateData(isoId, message: message.toString());
+  });
+  return isolate;
+}
+
+Future<Isolate> _spawn(SendPort port, SendPort onExit) async {
+  final isolate = await Isolate.spawn(worker, port, onExit: onExit);
+  return isolate;
 }
